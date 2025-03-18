@@ -44,7 +44,7 @@ class Controller:
         self.real_deploy = False
 
 
-        self.cycle_time = 0.47
+        self.cycle_time = 0.5
         self.n_priv = 0
 
         self.n_proprio = 2 + 3 + 3 + 2 + 2*self.config.num_actions + self.config.num_actions
@@ -204,7 +204,7 @@ class Controller:
         obs_prop = np.concatenate([
             sin_pos, cos_pos,
             self.cmd,
-            ang_vel * self.config.ang_vel_scale,
+            ang_vel,
             rpy[:2],
             qj_obs,
             dqj_obs,
@@ -237,8 +237,8 @@ class Controller:
             motor_idx = self.config.leg_joint2motor_idx[i]
             self.low_cmd.motor_cmd[motor_idx].q = self.target_leg_pos[i]
             self.low_cmd.motor_cmd[motor_idx].qd = 0
-            self.low_cmd.motor_cmd[motor_idx].kp = self.config.kps[i] * 0.8
-            self.low_cmd.motor_cmd[motor_idx].kd = self.config.kds[i] * 1.2
+            self.low_cmd.motor_cmd[motor_idx].kp = self.config.kps[i] * 0.65
+            self.low_cmd.motor_cmd[motor_idx].kd = self.config.kds[i] * 1.1
             self.low_cmd.motor_cmd[motor_idx].tau = 0
 
         target_upper_pos = all_dof_actions[self.config.arm_waist_joint2motor_idx] 
