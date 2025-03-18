@@ -44,7 +44,7 @@ class Controller:
         self.real_deploy = False
 
 
-        self.cycle_time = 0.64
+        self.cycle_time = 0.47
         self.n_priv = 0
 
         self.n_proprio = 2 + 3 + 3 + 2 + 2*self.config.num_actions + self.config.num_actions
@@ -176,14 +176,14 @@ class Controller:
         ang_vel = np.array(self.low_state.imu_state.gyroscope, dtype=np.float32)
         waist_yaw = 0.0
         waist_yaw_omega = 0.0
-
-        if self.config.imu_type == "torso":
-            # h1 and h1_2 imu is on the torso
-            # imu data needs to be transformed]
+    
+        # Training uses old model, imu on torso, etc
+        if self.config.imu_type == "pelvis":
             waist_yaw = self.low_state.motor_state[self.config.arm_waist_joint2motor_idx[0]].q
             waist_yaw_omega = self.low_state.motor_state[self.config.arm_waist_joint2motor_idx[0]].dq
             quat, ang_vel = transform_imu_data(waist_yaw=waist_yaw, waist_yaw_omega=waist_yaw_omega, imu_quat=quat, imu_omega=ang_vel)
-            
+
+
         # create observation
         count = self.counter * self.config.control_dt
         phase = count % self.cycle_time / self.cycle_time
@@ -197,7 +197,7 @@ class Controller:
         ang_vel = ang_vel * self.config.ang_vel_scale
 
         rpy = quatToEuler(quat)
-        rpy[1] -= 0.08
+        rpy[1] += 0.098
 
         self.handle_key_cmd()
 
@@ -216,6 +216,7 @@ class Controller:
         self.proprio_history_buf.append(obs_prop)
 
         obs_buf = np.concatenate([obs_prop, self.priv_latent, obs_hist])
+        assert obs_buf.shape[0] == self.config.num_obs, f"Expected {self.config.num_obs} but got {obs_buf.shape[0]}"
         
         obs_tensor = torch.from_numpy(obs_buf).float().unsqueeze(0)
 
@@ -229,24 +230,26 @@ class Controller:
 
         # transform action to self.target_leg_pos
         self.target_leg_pos = all_dof_actions[self.config.leg_joint2motor_idx]
+        print("Target leg pos: ", self.target_leg_pos)
 
         # Build low cmd
         for i in range(len(self.config.leg_joint2motor_idx)):
             motor_idx = self.config.leg_joint2motor_idx[i]
             self.low_cmd.motor_cmd[motor_idx].q = self.target_leg_pos[i]
             self.low_cmd.motor_cmd[motor_idx].qd = 0
-            self.low_cmd.motor_cmd[motor_idx].kp = self.config.kps[i] 
-            self.low_cmd.motor_cmd[motor_idx].kd = self.config.kds[i] 
+            self.low_cmd.motor_cmd[motor_idx].kp = self.config.kps[i] * 0.8
+            self.low_cmd.motor_cmd[motor_idx].kd = self.config.kds[i] * 1.2
             self.low_cmd.motor_cmd[motor_idx].tau = 0
 
-        target_upper_pos = all_dof_actions[self.config.arm_waist_joint2motor_idx]
+        target_upper_pos = all_dof_actions[self.config.arm_waist_joint2motor_idx] 
+        # print(target_upper_pos)
 
         for i in range(len(self.config.arm_waist_joint2motor_idx)):
             motor_idx = self.config.arm_waist_joint2motor_idx[i]
             self.low_cmd.motor_cmd[motor_idx].q = target_upper_pos[i]
             self.low_cmd.motor_cmd[motor_idx].qd = 0
-            self.low_cmd.motor_cmd[motor_idx].kp = self.config.arm_waist_kps[i] 
-            self.low_cmd.motor_cmd[motor_idx].kd = self.config.arm_waist_kds[i] 
+            self.low_cmd.motor_cmd[motor_idx].kp = self.config.arm_waist_kps[i] * 1.0
+            self.low_cmd.motor_cmd[motor_idx].kd = self.config.arm_waist_kds[i] * 1.0
             self.low_cmd.motor_cmd[motor_idx].tau = 0
 
         # send the command
@@ -293,10 +296,10 @@ if __name__ == "__main__":
     config = Config(config_path)
 
     config.default_21_angles = np.array([-0.4,  0.0,  0.0,  0.8, -0.35, 0.0,
-                                        -0.4,  0.0,  0.0,  0.8, -0.35, 0.0,
-                                        0,
-                                        0., 0., 0, 0.,
-                                        0., 0., 0, 0.])
+                                         -0.4,  0.0,  0.0,  0.8, -0.35, 0.0,
+                                         0,
+                                         0., 0., 0, 0.,
+                                         0., 0., 0, 0.])
     
     config.action_joint2motor_idx = np.array([0, 1, 2, 3, 4, 5, 
                                               6, 7, 8, 9, 10, 11,
