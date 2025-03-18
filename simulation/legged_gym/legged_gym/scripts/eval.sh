@@ -16,5 +16,5 @@ python play.py --task "${task_name}" \
                 --num_envs 1 \
                 # --record_video \
                 # --checkpoint 20000 \
-                # --use_jit \
-                # --teleop_mode
+                --use_jit \
+                --teleop_mode

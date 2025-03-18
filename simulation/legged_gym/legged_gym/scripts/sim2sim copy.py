@@ -55,107 +55,8 @@ class HumanoidEnv:
         self.robot_type = robot_type
         self.device = device
         self.record_video = record_video
-        if robot_type == "gr1":
-            model_path = f"{LEGGED_GYM_ROOT_DIR}/resources/robots/gr1t1/urdf/GR1T1.xml"
-            self.stiffness = np.array([
-                251.625, 362.52, 200, 200, 10.98, 0.0,
-                251.625, 362.52, 200, 200, 10.98, 0.0,
-                362.52, 362.52*2, 362.52*2,
-                40, 40, 40, 40,
-                40, 40, 40, 40,
-            ])
-            self.damping = np.array([
-                14.72, 10.08, 11, 11, 0.60, 0.1,
-                14.72, 10.08, 11, 11, 0.60, 0.1,
-                10.08, 10.08, 10.08,
-                2.0, 2.0, 2.0, 2.0,
-                2.0, 2.0, 2.0, 2.0,
-            ])
-            
-            self.control_indices = np.array([0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 15, 16, 17, 18, 19, 20, 21, 22])
-            self.num_actions = len(self.control_indices)
-            self.num_dofs = 23
 
-            self.default_dof_pos = np.array([
-                0.0, 0.0, -0.4, 0.8, -0.4, 0.0,  # left leg (6)
-                0.0, 0.0, -0.4, 0.8, -0.4, 0.0,  # right leg (6)
-                0.0, -0.0, 0.0,  # waist (3)
-                0.0, 0.2, 0.0, -0.3,
-                0.0, -0.2, 0.0, -0.3,
-            ])
-            
-            self.torque_limits = np.array([
-                48, 60, 160, 160, 16, 8,
-                48, 60, 160, 160, 16, 8,
-                82.5, 82.5, 82.5,
-                18, 18, 18, 18,
-                18, 18, 18, 18,
-            ])
-            
-            self.cycle_time = 0.8
-        
-        elif robot_type == "h1":
-            model_path = f"{LEGGED_GYM_ROOT_DIR}/resources/robots/h1/h1.xml"
-            self.stiffness = np.array([
-                200, 200, 200, 200, 40,
-                200, 200, 200, 200, 40,
-                300,
-                40, 40, 40, 40,
-                40, 40, 40, 40,
-            ])
-            self.damping = np.array([
-                5, 5, 5, 5, 2,
-                5, 5, 5, 5, 2,
-                6,
-                2.0, 2.0, 2.0, 2.0,
-                2.0, 2.0, 2.0, 2.0,
-            ])
-            self.control_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]) # all dofs
-            self.num_actions = len(self.control_indices)
-            self.num_dofs = 19
-            
-            self.default_dof_pos = np.array([
-                0.0, 0.0, -0.6, 1.2, -0.6,  # left leg (5)
-                0.0, 0.0, -0.6, 1.2, -0.6,  # right leg (5)
-                0.0,  # waist (1)
-                0.0, 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 0.0,
-            ])
-            
-            self.torque_limits = np.array([
-                200, 200, 200, 300, 40,
-                200, 200, 200, 300, 40,
-                200,
-                40, 40, 18, 18,
-                40, 40, 18, 18,
-            ])
-            
-            self.cycle_time = 0.8
-            
-        elif robot_type == "berkeley":
-            model_path = f"{LEGGED_GYM_ROOT_DIR}/resources/robots/berkeley_humanoid/urdf/robot.xml"
-            self.stiffness = np.array([
-                10, 10, 15, 15, 1, 1,
-                10, 10, 15, 15, 1, 1,
-            ])
-            self.damping = np.array([
-                1.5, 1.5, 1.5, 1.5, 0.1, 0.1,
-                1.5, 1.5, 1.5, 1.5, 0.1, 0.1,
-            ])
-            self.control_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) # all dofs
-            self.num_actions = len(self.control_indices)
-            self.num_dofs = 12
-            self.default_dof_pos = np.array([
-                -0.071, 0.103, -0.463, 0.983, -0.350, 0.126,  # left leg (6)
-                0.071, -0.103, -0.463, 0.983, -0.350, -0.126,  # right leg (6)
-            ])
-            self.torque_limits = np.array([
-                20, 20, 30, 30, 20, 5,
-                20, 20, 30, 30, 20, 5,
-            ])
-            self.cycle_time = 0.64
-        
-        elif robot_type == "g1":
+        if robot_type == "g1":
             model_path = f"{LEGGED_GYM_ROOT_DIR}/resources/robots/g1_description/g1_23dof.xml"
             self.stiffness = np.array([
                 200, 150, 150, 200, 20, 20,
@@ -221,12 +122,9 @@ class HumanoidEnv:
         self.action_scale = 0.5
         
         self.n_priv = 0
-        if self.robot_type == "gr1":
-            self.n_proprio = 2 + 3 + 3 + 2 + 2*(self.num_dofs-2) + self.num_actions
-            self.n_priv_latent = 4 + 1 + 2*(self.num_dofs-2) + 3
-        else:
-            self.n_proprio = 2 + 3 + 3 + 2 + 2*self.num_dofs + self.num_actions
-            self.n_priv_latent = 4 + 1 + self.num_dofs*2 + 3
+
+        self.n_proprio = 2 + 3 + 3 + 2 + 2*self.num_dofs + self.num_actions
+        self.n_priv_latent = 4 + 1 + self.num_dofs*2 + 3
             
         self.history_len = 10
         self.priv_latent = np.zeros(self.n_priv_latent, dtype=np.float32)
@@ -303,7 +201,6 @@ class HumanoidEnv:
                 
                 with torch.no_grad():
                     raw_action = self.policy_jit(obs_tensor).cpu().numpy().squeeze()
-                print(obs_tensor.shape, raw_action.shape)
                 
                 self.last_action = raw_action.copy()
                 raw_action = np.clip(raw_action, -10., 10.)
